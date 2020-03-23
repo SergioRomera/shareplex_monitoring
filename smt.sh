@@ -146,7 +146,8 @@ function version()
   c=$2
   tput cup $l $c
   version=`echo "version" | sp_ctrl | grep Version | awk '{print $4}'`
-  printf "\e[104m*** SharePlex Monitoring 0.1 ***\e[49m SharePlex Version: \e[34m$version\e[0m"
+  printf "\e[104m*** SharePlex Monitoring 0.2 ***"
+  printf "\e[49m SharePlex Version: \e[34m$version\e[0m"
 }
 
 function cpu()
@@ -245,7 +246,7 @@ function menu()
   l=$(($lines-2))
   c=0
   tput cup $l 0
-  printf "Q|ESC:${c_header}Quit${c_r} L:${c_header}Event log${c_r}"
+  printf "Q|ESC:${c_header}Quit${c_r} L:${c_header}Event log${c_r} D:${c_header}Event DDL log${c_r}"
 }
 
 function logs()
@@ -272,6 +273,57 @@ function logs()
   clear
   first_exec=1
   menu="m"
+}
+
+function ddl_logs () {
+  l=1
+  tput civis
+  tput reset
+  tput cup 0 0
+  printf "${c_header}SharePlex DDL Logs${c_r}"
+
+  l_lines=$(($lines-5))
+  l_columns=$(($columns-2))
+
+  ddl_files=`ls ${SP_SYS_VARDIR}/log/*ddl* > $tmp/ddl_files`
+  n_ddl_files=`cat $tmp/ddl_files | wc -l`
+
+  l_half_lines=$(($lines/${n_ddl_files}-4))
+  
+  while IFS= read -r line1
+  do
+    tput cup $l 0
+    printf "*** Start File: $line1\n"
+    l=$(($l+1))
+    tail -${l_half_lines} $line1 | cut -c 1-${l_columns} > $tmp/ddl_file
+    while IFS= read -r line2
+    do
+      tput cup $l 0
+      echo "$line2"
+      l=$(($l+1))
+    done < $tmp/ddl_file
+    tput cup $l 0
+    printf "*** End File: $line1\n"
+    l=$(($l+1))
+    tput cup $l 0
+  done < $tmp/ddl_files
+ 
+  l=$(($l+2))
+  menu
+  tput civis
+  read -n 1 -r key
+  clear
+  first_exec=1
+  menu="m"
+}
+
+date_time () {
+  l=$1
+  c=$0
+  d=$(date "+%d/%m/%Y %H:%M:%S")
+
+  tput cup $l $c
+  printf "Date: $d"
 }
 
 # function resolution ()
@@ -304,8 +356,8 @@ main () {
         echo "counter: $counter"
         echo "notrunning: $notrunning"
         echo "level: $level1"
-        echo "lines: $LINES"
-        echo "columns: $COLUMNS"
+        echo "lines: $lines"
+        echo "columns: $columns"
       fi
       echo "SharePlex not running"
       tput cnorm
@@ -330,12 +382,16 @@ main () {
     if [ $menu = "l" ]; then
       logs
     fi
+    if [ $menu = "d" ]; then
+      ddl_logs
+    fi
     
     if [ $menu = "m" ]; then
-      counters $counter $LINES $COLUMNS
-      cpu 1 0
-      host 1 12
-      shareplex_config 2 0
+      counters $counter $lines $columns
+      cpu 2 0
+      date_time 1 0
+      host 2 12
+      shareplex_config 3 0
       objects 7 0
       process 6 39
       variables 6 80
@@ -368,6 +424,11 @@ main () {
       menu="l"
       logs;;
       
+      d)
+      clear
+      menu="d"
+      ddl_logs;;
+
       $'\x1b'|q) # ESC 
       tput cnorm;
       clear;
