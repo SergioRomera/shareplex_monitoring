@@ -4,15 +4,13 @@ Monitor your SharePlex environment.
 
 ## Getting Started
 
-Download files from github (https://gist.github.com/sergioromera/...).
+Download files from github (https://github.com/SergioRomera/shareplex_monitoring.git).
+
 
 ### Prerequisites
 
 This shell works only in linux environments.
 
-```
-Give examples
-```
 
 ### Installing
 
@@ -21,29 +19,20 @@ Modify config.env file if you want to setup target environment.
 
 
 ```
-Give the example
+wget https://github.com/SergioRomera/shareplex_monitoring/archive/master.zip
+unzip master.zip
+cd master*
+sh smt.sh
 ```
+## Screenshots
 
-And repeat
+![](./images/smt.png)
 
-```
-until finished
-```
-
-
-## Built With
-
-* [Dropwizard](http://www.dropwizard.io/1.0.2/docs/) - The web framework used
-* [Maven](https://maven.apache.org/) - Dependency Management
-* [ROME](https://rometools.github.io/rome/) - Used to generate RSS Feeds
-
-## Contributing
-
-Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us.
+![](./images/smt_logs.png)
 
 ## Versioning
 
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/your/project/tags). 
+Currnt version is 0.1 (Beta). 
 
 ## Authors
 
@@ -52,5 +41,5 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
+This project is Free for all Quest SharePlex users.
 
