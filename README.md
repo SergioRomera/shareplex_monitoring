@@ -21,8 +21,8 @@ Modify config.env file if you want to setup target environment.
 ```
 wget https://github.com/SergioRomera/shareplex_monitoring/archive/master.zip
 unzip master.zip
-cd master*
-sh smt.sh
+cd shareplex_monitoring-master
+. ./smt.sh
 ```
 ## Screenshots
 
