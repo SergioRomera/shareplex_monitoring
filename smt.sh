@@ -221,8 +221,8 @@ dir_size ()
   c=$2
   # Queue Directory Size
   ds=`du -Ph $SP_SYS_VARDIR | grep rim | awk '{print $1}'`
-  tput cup $l $c
-  printf "${c_header}Queue Size:$c_r\n"
+  tput cup 4 0
+  printf "${c_header}Queue Size:${c_r}\n"
   l=$(($l+1))
   tput cup $l $c
   printf "Queue Directory Size: ${c_green} $ds ${c_default}"
@@ -242,7 +242,8 @@ function target_queues() {
 
 function menu()
 {
-  l=$(($LINES-1))
+  l=$(($lines-2))
+  c=0
   tput cup $l 0
   printf "Q|ESC:${c_header}Quit${c_r} L:${c_header}Event log${c_r}"
 }
@@ -250,14 +251,13 @@ function menu()
 function logs()
 {
   l=0
-  c=$LINES
   tput civis
   tput reset
   tput cup 0 0
   printf "${c_header}SharePlex Logs${c_r}"
-  l_lines=$(($LINES-4))
-  l_columns=$(($COLUMNS-2))
-  tail -$l_lines $SP_SYS_VARDIR/log/event_log | cut -c 1-$l_columns > ./tmp/logs
+  l_lines=$(($lines-5))
+  l_columns=$(($columns-2))
+  tail -${l_lines} ${SP_SYS_VARDIR}/log/event_log | cut -c 1-${l_columns} > $tmp/logs
   
   l=$(($l+2))
   while IFS= read -r line
@@ -265,7 +265,7 @@ function logs()
     tput cup $l 0
     echo "$line"
     l=$(($l+1))
-  done < .$tmp/logs
+  done < $tmp/logs
   menu
   tput civis
   read -n 1 -r key
@@ -274,11 +274,23 @@ function logs()
   menu="m"
 }
 
+# function resolution ()
+# {
+  # if [ $LINES -gt 40 ] & [ $COLUMNS -gt 100 ]; then
+    # echo "No resolution"
+    # exit
+  # fi
+# }
+
 # ----------------------------------
 main () {
   
-
+  #resolution # minimum resolution screen
+  
   tput civis # cursor invisible
+  lines=$(tput lines)
+  columns=$(tput cols)
+
   while [ true ]
   do
 
@@ -303,12 +315,12 @@ main () {
     if [ $first_exec = 1 ] ; then
       clear
       tput civis # cursor invisible
-      tput reset #
+      tput reset
 
+      create_tmp
       version 0 0 
       colorize
       delete_logs
-      create_tmp
 
       dir_size 4 0
       menu 
