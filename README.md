@@ -32,7 +32,11 @@ cd shareplex_monitoring-master
 
 ## Versioning
 
+<<<<<<< HEAD
 Current version is 0.3 (Beta). 
+=======
+Current version is 0.2 (Beta). 
+>>>>>>> 500ee42d25f73afff6739fafbbd845e24202151c
 
 ## Authors
 
