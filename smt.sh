@@ -10,7 +10,7 @@ counter=5 #Refresh
 level1=$counter
 level2=60
 
-first_exec=1
+#first_exec=1
 
 function delete_logs ()
 {
@@ -146,7 +146,7 @@ function version()
   c=$2
   tput cup $l $c
   version=`echo "version" | sp_ctrl | grep Version | awk '{print $4}'`
-  printf "\e[104m*** SharePlex Monitoring 0.2 ***"
+  printf "\e[104m*** SharePlex Monitoring 0.3 ***"
   printf "\e[49m SharePlex Version: \e[34m$version\e[0m"
 }
 
@@ -171,8 +171,8 @@ function queues ()
   echo "qstatus" | sp_ctrl | grep -E "Queue|Name|Number|Backlog" > $tmp/qstatus
   printf "${c_header}Queue Statistics:$c_r\n"
   cat $tmp/qstatus
-  qstatus=`echo "qstatus" | sp_ctrl | grep -E "Queue|Name|Number|Backlog" | wc -l`
-  
+  #qstatus=`echo "qstatus" | sp_ctrl | grep -E "Queue|Name|Number|Backlog" | wc -l`
+  qstatus=`cat $tmp/qstatus | wc -l`
   ll=$(($l+2+$qstatus))
 
   tput cup $ll 0
@@ -214,6 +214,14 @@ function counters ()
   printf "Lines: $2"
   tput cup 2 $c
   printf "Cols: $3"
+  if [ $debug = "Y" ]; then
+    tput cup 3 $c
+    printf "First: $first_exec"
+    tput cup 4 $c
+    printf "Key: $key"
+    tput cup 5 $c
+    printf "Menu: $menu"
+  fi
 }
 
 dir_size ()
@@ -241,12 +249,22 @@ function target_queues() {
   $tmp/colorize $tmp/target_queues
 }
 
+# function check_sp_cop ()
+# {
+  # sp_ctrl=`ps -ef | grep sp_cop | grep sp_cop | wc -l`
+  # if [ sp_ctrl -eq 0 ]; then
+    # echo "No sp_ctrl is running"
+    # exit
+  # fi
+# }
+
 function menu()
 {
   l=$(($lines-2))
   c=0
   tput cup $l 0
-  printf "Q|ESC:${c_header}Quit${c_r} L:${c_header}Event log${c_r} D:${c_header}Event DDL log${c_r}"
+  printf "Q|ESC:${c_b_light_blue}Quit${c_r} L:${c_b_light_blue}Event log${c_r} "
+  printf "D:${c_b_light_blue}Event DDL log${c_r} P:${c_b_light_blue}Parameters${c_r}"
 }
 
 function logs()
@@ -269,26 +287,26 @@ function logs()
   done < $tmp/logs
   menu
   tput civis
-  read -n 1 -r key
+  read -n 1 -r key_l
   clear
   first_exec=1
   menu="m"
 }
 
 function ddl_logs () {
-  l=1
+  l=2
   tput civis
   tput reset
   tput cup 0 0
   printf "${c_header}SharePlex DDL Logs${c_r}"
 
-  l_lines=$(($lines-5))
+  l_lines=$(($lines-7))
   l_columns=$(($columns-2))
 
   ddl_files=`ls ${SP_SYS_VARDIR}/log/*ddl* > $tmp/ddl_files`
   n_ddl_files=`cat $tmp/ddl_files | wc -l`
 
-  l_half_lines=$(($lines/${n_ddl_files}-4))
+  l_half_lines=$(($lines/${n_ddl_files}-5))
   
   while IFS= read -r line1
   do
@@ -311,7 +329,7 @@ function ddl_logs () {
   l=$(($l+2))
   menu
   tput civis
-  read -n 1 -r key
+  read -n 1 -r key_d
   clear
   first_exec=1
   menu="m"
@@ -326,22 +344,95 @@ date_time () {
   printf "Date: $d"
 }
 
-# function resolution ()
-# {
-  # if [ $LINES -gt 40 ] & [ $COLUMNS -gt 100 ]; then
-    # echo "No resolution"
-    # exit
-  # fi
-# }
+function resolution ()
+{
+  if [ "$lines" -lt "40" ]; then
+    echo "Minimal screen resolution:"
+    echo " - Lines: 40"
+    echo " - Columns: 100"
+    exit
+  fi
+}
+
+function menu_parameters()
+{
+  l=$(($lines-2))
+  c=0
+  tput cup $l 0
+  printf "Q|ESC:${c_b_light_blue}Quit${c_r} F:${c_b_light_blue}Filter${c_r} L:${c_b_light_blue}List param${c_r} "
+}
+
+parameters() {
+
+  l=0
+  c=0
+
+  while [ true ]
+  do
+    #clear
+    menu_parameters
+    #param_show
+
+    tput civis
+    read -n 1 menu_param
+    
+    case $menu_param in
+         
+      f)
+      #menu="f"
+      filter_param
+      list_param;;
+      
+      l)
+      #clear
+      #menu="l"
+      list_param;;
+
+      $'\x1b'|q) # ESC 
+      tput cnorm;
+      clear
+      menu="m"
+      first_exec=1
+      main;;
+    esac
+  done  
+}
+
+list_param() {
+  tput reset
+  tput cnorm
+  tput cup 2 0
+  echo "list param" | sp_ctrl | grep -i -E "$filter_param" > $tmp/parameters
+  printf "${c_header}SharePlex Parameters:$c_r\n"
+  tput reset
+  tput cup 3 0
+  more -p $tmp/parameters #| grep -i "$filter_param"
+  #more $tmp/parameters 
+  
+}
+
+filter_param() {
+  tput reset
+  tput cnorm
+  tput cup 0 0
+  read -p "Param Filter: " filter_param
+  param_show
+  tput civis
+}
+
+param_show() {
+  #clear
+  tput cup 0 0
+  printf "Param Filter: $filter_param"
+}
 
 # ----------------------------------
 main () {
   
-  #resolution # minimum resolution screen
-  
   tput civis # cursor invisible
   lines=$(tput lines)
   columns=$(tput cols)
+  resolution # minimum resolution screen
 
   while [ true ]
   do
@@ -379,12 +470,12 @@ main () {
       first_exec=0
     fi
 
-    if [ $menu = "l" ]; then
-      logs
-    fi
-    if [ $menu = "d" ]; then
-      ddl_logs
-    fi
+    # if [ $menu = "l" ]; then
+      # logs
+    # fi
+    # if [ $menu = "d" ]; then
+      # ddl_logs
+    # fi
     
     if [ $menu = "m" ]; then
       counters $counter $lines $columns
@@ -413,25 +504,29 @@ main () {
     read -t 1 -n 1 -r key
     
     case $key in
-      
-      c)
-      menu="c"
-      version
-      clear;;
-      
+         
       l)
       clear
       menu="l"
-      logs;;
+      logs
+      counter=1;;
       
       d)
       clear
       menu="d"
-      ddl_logs;;
+      ddl_logs
+      counter=1;;
+
+      p)
+      clear
+      menu="p"
+      parameters
+      counter=1;;
 
       $'\x1b'|q) # ESC 
       tput cnorm;
-      clear;
+      first_exec=1
+      clear
       exit;;
     esac
     
@@ -439,5 +534,8 @@ main () {
   done
 }
 
+key=0
 menu="m"
+first_exec=1
+filter_param=""
 main
